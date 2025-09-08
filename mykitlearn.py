@@ -16,29 +16,17 @@ class LinearRegression:
         learning_rate = getattr(self, "learning_rate", 0.01)
         iterations = getattr(self, "n_iters", getattr(self, "iterations", 0))
         bias = getattr(self, "bias", 0.0)
-
         weight = getattr(self, "weight", None)
-        if weight is None:
-            w0 = 0.0
-        else:
-            try:
-                # First coefficient if array-like
-                w0 = float(weight[0])
-            except Exception:
-                # Scalar or non-indexable fallback
-                try:
-                    w0 = float(weight)
-                except Exception:
-                    w0 = 0.0
 
         # Clear, consistent string representation
-        return f"α: [{learning_rate}] n: [{iterations}] w: [{w0}] b: [{bias}]"
+        return f"α: [{learning_rate}] n: {iterations} w: {weight}  b: {bias}"
 
     # Checks if valid arrays
     def _prepare_X_y_(self, X: NDArray[np.float64], y: NDArray[np.float64]) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
         # Normalize to numpy arrays
         X = np.asarray(X, dtype=np.float64)
         y = np.asarray(y, dtype=np.float64)
+
         # Ensure X is 2D: [n_samples, n_features], and Ensure y is 1D [n_samples,]
         if X.ndim == 1:
             X = X.reshape(-1, 1)
@@ -143,7 +131,7 @@ class LinearRegression:
             # X is already (n, 1), keep as is
             pass
 
-        w = np.asarray(self.weight, dtype=float).reshape(-1)  # (m,)
+        w = np.asarray(self.weight, dtype=float)  # (m,)
         b = float(np.asarray(self.bias, dtype=float).reshape(()))  # scalar
 
         # If weight is scalar but X has one column, align dims
@@ -153,4 +141,5 @@ class LinearRegression:
             raise ValueError(f"Feature mismatch: X has {X.shape[1]} columns, weight has {w.size}.")
 
         y = X @ w + b
+
         return np.asarray(y, dtype=float).reshape(-1)
