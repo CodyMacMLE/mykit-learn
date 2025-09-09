@@ -22,11 +22,11 @@ The dataset contains **10,000 records** with the following features:
 ## ⚙️ Training Time
 
 | Model                     | Time (s) |
-| ------------------------- | -------- |
-| Batch Gradient Descent    | 1.7268   |
-| Mini-Batch GD (100)       | 10.3956  |
-| Stochastic GD             | 1.7038   |
-| Sklearn Linear Regression | 0.0107   |
+| ------------------------- |----------|
+| Batch Gradient Descent    | 0.3208   |
+| Mini-Batch GD (100)       | 7.8938   |
+| Stochastic GD             | 10.6110  |
+| Sklearn Linear Regression | 0.0115   |
 
 ---
 
@@ -36,22 +36,24 @@ The dataset contains **10,000 records** with the following features:
 
 * α (Learning Rate): `0.001`
 * Iterations: `50,000`
-* Weights: `[7.3856, 17.6369, 0.3043, 0.8088, 0.5500]`
-* Bias: `55.2408`
+* Weights: `[7.3800, 17.6280, 0.3044, 0.8100, 0.5536]`
+* Bias: `55.2111`
 
 ### Mini-Batch Gradient Descent (batch size = 100)
 
 * α (Learning Rate): `0.001`
 * Iterations: `10,000`
-* Weights: `[7.3770, 17.6385, 0.3027, 0.8001, 0.5505]`
-* Bias: `55.2390`
+* Weights: `[7.3319, 17.5466, 0.3131, 0.8035, 0.5757]`
+* Bias: `54.9438`
 
 ### Stochastic Gradient Descent
 
 * α (Learning Rate): `0.001`
 * Iterations: `50,000`
-* Weights: `[7.3856, 17.6369, 0.3043, 0.8088, 0.5500]`
-* Bias: `55.2408`
+* Weights: `[7.3262, 17.6398, 0.3154, 0.8289, 0.5172]`
+* Bias: `55.2709`
+
+**Note:** All custom implementations break at cost difference < `epsilon = 0.000001` or max iterations.
 
 ---
 
@@ -66,53 +68,31 @@ The dataset contains **10,000 records** with the following features:
 
 ## 📉 Training Mean Squared Error (MSE)
 
-| Model                     | MSE  |
-| ------------------------- | ---- |
-| My Batch GD               | 4.08 |
-| My Mini-Batch GD          | 4.08 |
-| My Stochastic GD          | 4.08 |
-| Sklearn Linear Regression | 4.08 |
+| Model                     | MSE    |
+| ------------------------- |--------|
+| My Batch GD               | 4.0809 |
+| My Mini-Batch GD          | 4.1569 |
+| My Stochastic GD          | 4.0939 |
+| Sklearn Linear Regression | 4.0826 |
 
 ---
 
 ## 🔮 Predictions (Sample)
 
 | Sample | SkLearn ŷ | Batch GD ŷ | Mini-Batch GD ŷ | Stochastic GD ŷ |
-| ------ | ---------- | ----------- | ---------------- | ---------------- |
-| 0      | 54.71      | 54.71       | 54.70            | 54.71            |
-| 1      | 22.62      | 22.62       | 22.63            | 22.62            |
-| 2      | 47.90      | 47.90       | 47.89            | 47.90            |
+| ------ |------------|-------------|------------------|------------------|
+| 0      | 54.71      | 54.68       | 54.38            | 54.78            |
+| 1      | 22.62      | 22.61       | 22.55            | 22.65            |
+| 2      | 47.90      | 47.88       | 47.64            | 47.90            |
 | 3      | 31.29      | 31.29       | 31.27            | 31.29            |
-| 4      | 43.00      | 43.00       | 43.01            | 43.00            |
-
----
-
-## ⚡ Complexity Analysis
-
-The main training and prediction operations in the custom **`LinearRegression`** class scale linearly with respect to the number of samples and features:
-
-* **Training Complexity**:
-
-  $$
-  O(n * m * i)
-  $$
-
-* **Prediction Complexity**:
-
-  $$
-  O(n * m)
-  $$
-
-where `n` = number of samples, `m` = number of features, and `i` = number of iterations.
-
-This ensures the implementation remains efficient and scalable for large datasets.
+| 4      | 43.00      | 42.98       | 42.76            | 42.93            |
 
 ---
 
 ## 🚀 Conclusion
 
 * All gradient descent approaches converged to **similar performance**.
-* **Batch GD** and **Stochastic GD** yielded the lowest MSE.
+* `Batch GD` yielded the lowest MSE with `Sci-Kit Linear Regression` second and the custom `Stochastic GD` third.
 * Predictions are stable and consistent across methods.
 
 ---

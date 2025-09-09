@@ -10,6 +10,7 @@ class LinearRegression:
         self.batches: int = batches
         self.weight: NDArray[np.float64] | np.float64 | None = None
         self.bias: np.float64 | None = None
+        self.cost: float | None = None
 
     def __str__(self) -> str:
         # Extract: make attribute access robust and readable
@@ -38,7 +39,11 @@ class LinearRegression:
             )
         return X, y
 
-    def _batchGradientDescent_(self, X: NDArray[np.float64], y: NDArray[np.float64], n_data):
+    def _calculateCost_(self, error, n_data) -> float:
+        cost = (1.0 / (2 * n_data)) * np.sum(error ** 2)
+        return cost
+
+    def _batchGradientDescent_(self, X: NDArray[np.float64], y: NDArray[np.float64], n_data) -> float:
 
         weight = self.weight
         bias = self.bias
@@ -55,6 +60,10 @@ class LinearRegression:
         # parameter updates
         self.weight = weight - self.learning_rate * derivative_w
         self.bias = bias - self.learning_rate * derivative_b
+
+        cost = self._calculateCost_(error, n_data)
+
+        return cost
 
     def _stochasticGradientDescent_(self, X: NDArray[np.float64], y: NDArray[np.float64], n_data):
         # Shuffling rows
@@ -76,6 +85,19 @@ class LinearRegression:
             self.weight = self.weight - self.learning_rate * dw
             self.bias = self.bias - self.learning_rate * db
 
+    def _check_convergence_(self, cost: float) -> bool:
+        epsilon = 0.000001
+
+        if self.cost is None:
+            self.cost = cost
+            return False
+        elif abs(self.cost - cost) < epsilon:
+            return True
+        else: # Update cost for next iteration
+            self.cost = cost
+            return False
+
+
     # Train data
     def train(self, X: NDArray[np.float64], y: NDArray[np.float64]) -> None:
         X_matrix, y_matrix = self._prepare_X_y_(X, y)
@@ -91,7 +113,9 @@ class LinearRegression:
         if self.gd_type == 'BGd':
             if self.batches == 1:
                 for _ in range(self.n_iters):
-                    self._batchGradientDescent_(X_matrix, y_matrix, n_data)
+                    cost = self._batchGradientDescent_(X_matrix, y_matrix, n_data)
+                    if self._check_convergence_(cost):
+                        break
             elif self.batches >= 2:
                 n_rows = int(n_data / self.batches)
                 for _ in range(self.n_iters):
@@ -105,6 +129,14 @@ class LinearRegression:
                         X_batch = X_shuffled[(i * n_rows):n_rows]
                         y_batch = y_shuffled[(i * n_rows):n_rows]
                         self._batchGradientDescent_(X_batch, y_batch, n_rows)
+
+                    y_hat = X_matrix @ self.weight + self.bias
+                    error = y_hat - y_matrix
+                    cost = self._calculateCost_(error, n_data)
+
+                    if self._check_convergence_(cost):
+                        break
+
             else:
                 raise ValueError(f"Batch size {self.batches} not supported. Enter a batch size >= 1")
 
@@ -112,7 +144,12 @@ class LinearRegression:
         # Stochastic Gradient Descent
         elif self.gd_type == 'SGd':
             for _ in range(self.n_iters):
-                self._batchGradientDescent_(X_matrix, y_matrix, n_data)
+                self._stochasticGradientDescent_(X_matrix, y_matrix, n_data)
+                y_hat = X_matrix @ self.weight + self.bias
+                error = y_hat - y_matrix
+                cost = self._calculateCost_(error, n_data)
+                if self._check_convergence_(cost):
+                    break
 
         else:
             raise ValueError(f"GD: {self.gd_type} is not supported.")
