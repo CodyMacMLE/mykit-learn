@@ -2,6 +2,27 @@ import numpy as np
 
 from numpy.typing import ArrayLike, NDArray
 
+# Checks if valid arrays
+def _prepare_X_y(self, X: NDArray[np.float64], y: NDArray[np.float64]) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
+    # Normalize to numpy arrays
+    X = np.asarray(X, dtype=np.float64)
+    y = np.asarray(y, dtype=np.float64)
+
+    # Ensure X is 2D: [n_samples, n_features], and Ensure y is 1D [n_samples,]
+    if X.ndim == 1:
+        X = X.reshape(-1, 1)
+    if y.ndim == 1:
+        y = y.reshape(-1)
+    if y.shape[0] != X.shape[0]:
+        raise ValueError(
+            f"Number of samples in X ({X.shape[0]}) does not match number of targets in y ({y.shape[0]})"
+        )
+    return X, y
+
+def _calculateCost(self, error, n_data) -> float:
+    cost = (1.0 / (2 * n_data)) * np.sum(error ** 2)
+    return cost
+
 class LinearRegression:
     def __init__(self, learning_rate: float = 0.01, iterations: int = 1000, gd_type: str = 'BGd', batches: int = 1) -> None:
         self.learning_rate: float = learning_rate
@@ -22,27 +43,6 @@ class LinearRegression:
         # Clear, consistent string representation
         return f"α: [{learning_rate}] n: {iterations} w: {weight}  b: {bias}"
 
-    # Checks if valid arrays
-    def _prepare_X_y_(self, X: NDArray[np.float64], y: NDArray[np.float64]) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
-        # Normalize to numpy arrays
-        X = np.asarray(X, dtype=np.float64)
-        y = np.asarray(y, dtype=np.float64)
-
-        # Ensure X is 2D: [n_samples, n_features], and Ensure y is 1D [n_samples,]
-        if X.ndim == 1:
-            X = X.reshape(-1, 1)
-        if y.ndim == 1:
-            y = y.reshape(-1)
-        if y.shape[0] != X.shape[0]:
-            raise ValueError(
-                f"Number of samples in X ({X.shape[0]}) does not match number of targets in y ({y.shape[0]})"
-            )
-        return X, y
-
-    def _calculateCost_(self, error, n_data) -> float:
-        cost = (1.0 / (2 * n_data)) * np.sum(error ** 2)
-        return cost
-
     def _batchGradientDescent_(self, X: NDArray[np.float64], y: NDArray[np.float64], n_data) -> float:
 
         weight = self.weight
@@ -61,7 +61,7 @@ class LinearRegression:
         self.weight = weight - self.learning_rate * derivative_w
         self.bias = bias - self.learning_rate * derivative_b
 
-        cost = self._calculateCost_(error, n_data)
+        cost = _calculateCost(error, n_data)
 
         return cost
 
@@ -97,10 +97,8 @@ class LinearRegression:
             self.cost = cost
             return False
 
-
-    # Train data
     def train(self, X: NDArray[np.float64], y: NDArray[np.float64]) -> None:
-        X_matrix, y_matrix = self._prepare_X_y_(X, y)
+        X_matrix, y_matrix = _prepare_X_y(X, y)
         n_data = float(X.shape[0])
         features = X.shape[1]
 
@@ -180,3 +178,25 @@ class LinearRegression:
         y = X @ w + b
 
         return np.asarray(y, dtype=float).reshape(-1)
+
+class LogisticRegression:
+    def __init__(self, learning_rate: float = 0.01, iterations: int = 1000, gd_type: str = 'BGd', batches: int = 1) -> None:
+        self.learning_rate: float = learning_rate
+        self.n_iters: int = iterations
+        self.gd_type: str = gd_type
+        self.batches: int = batches
+        self.weight: NDArray[np.float64] | np.float64 | None = None
+        self.bias: np.float64 | None = None
+        self.cost: float | None = None
+
+    def __str__(self) -> str:
+        return "Not implemented."
+
+    def _batchGradientDescent_(self, X: NDArray[np.float64], y: NDArray[np.float64]) -> float:
+        return 0.0
+
+    def train(self, X: NDArray[np.float64], y: NDArray[np.float64]) -> None:
+        return 0.0
+
+    def predict(self, X) -> NDArray[np.float64]:
+        return np.asarray(X, dtype=np.float64)
