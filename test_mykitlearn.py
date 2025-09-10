@@ -30,20 +30,18 @@ def test_LogisticRegression():
     y = np.array([0.0, 1.0], dtype=np.float64)
 
     logisticModelBatch = mykitlearn.LogisticRegression()
-    """
     logisticModelMiniBatch = mykitlearn.LogisticRegression(batches=2)
-    logisticModelStochastic = mykitlearn.LogisticRegression(gd_type="SGD")
-    """
+    logisticModelStochastic = mykitlearn.LogisticRegression(gd_type="SGd")
 
     logisticModelBatch.train(X, y)
     predsLogisticBatch = logisticModelBatch.predict(X)
-    """
+
     logisticModelMiniBatch.train(X, y)
+    predsLogisticMiniBatch = logisticModelMiniBatch.predict(X)
+
     logisticModelStochastic.train(X, y)
-    """
+    predsLogisticStochastic = logisticModelStochastic.predict(X)
 
     assert np.all((predsLogisticBatch >= 0) & (predsLogisticBatch <= 1))
-    """
-    assert np.allclose(logisticModelMiniBatch.predict(X), y, atol=0.5)
-    assert np.allclose(logisticModelStochastic.predict(X), y, atol=0.5)
-    """
+    assert np.all((predsLogisticMiniBatch >= 0) & (predsLogisticMiniBatch <= 1))
+    assert np.all((predsLogisticStochastic >= 0) & (predsLogisticStochastic <= 1))

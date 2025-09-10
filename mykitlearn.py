@@ -234,6 +234,28 @@ class LogisticRegression:
 
         return cost
 
+    def _stochasticGradientDescent_(self, X, y, n_data) -> float:
+        # Shuffling rows
+        indices = np.random.permutation(len(X))
+        X_shuffled = X[indices]
+        y_shuffled = y[indices]
+        for i in range(int(n_data)):
+            x_i = X_shuffled[i]
+            y_i = y_shuffled[i]
+
+            # predictions and error
+            z = x_i @ self.weight + self.bias
+            y_hat_i = self._sigmoid(z)
+            error = y_hat_i - y_i
+
+            # gradients
+            derivative_w = x_i * error
+            derivative_b = error  # type: ignore
+
+            # parameter updates
+            self.weight = self.weight - self.learning_rate * derivative_w
+            self.bias = self.bias - self.learning_rate * derivative_b
+
     def train(self, X: NDArray[np.float64], y: NDArray[np.float64]) -> None:
         X_matrix, y_matrix = _prepare_X_y(X, y)
         n_data = float(X.shape[0])
@@ -283,7 +305,7 @@ class LogisticRegression:
                 self._stochasticGradientDescent_(X_matrix, y_matrix, n_data)
                 y_hat = X_matrix @ self.weight + self.bias
                 error = y_hat - y_matrix
-                cost = self._calculateCost_(error, n_data)
+                cost = self._calculateCost_(error, n_data, y_matrix)
                 if self._check_convergence_(cost):
                     break
 
