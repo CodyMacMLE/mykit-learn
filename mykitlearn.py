@@ -3,7 +3,7 @@ import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
 # Checks if valid arrays
-def _prepare_X_y(self, X: NDArray[np.float64], y: NDArray[np.float64]) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
+def _prepare_X_y(X: NDArray[np.float64], y: NDArray[np.float64]) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
     # Normalize to numpy arrays
     X = np.asarray(X, dtype=np.float64)
     y = np.asarray(y, dtype=np.float64)
@@ -18,10 +18,6 @@ def _prepare_X_y(self, X: NDArray[np.float64], y: NDArray[np.float64]) -> tuple[
             f"Number of samples in X ({X.shape[0]}) does not match number of targets in y ({y.shape[0]})"
         )
     return X, y
-
-def _calculateCost(self, error, n_data) -> float:
-    cost = (1.0 / (2 * n_data)) * np.sum(error ** 2)
-    return cost
 
 class LinearRegression:
     def __init__(self, learning_rate: float = 0.01, iterations: int = 1000, gd_type: str = 'BGd', batches: int = 1) -> None:
@@ -43,6 +39,10 @@ class LinearRegression:
         # Clear, consistent string representation
         return f"α: [{learning_rate}] n: {iterations} w: {weight}  b: {bias}"
 
+    def _calculateCost_(self, error, n_data) -> float:
+        cost = (1.0 / (2 * n_data)) * np.sum(error ** 2)
+        return cost
+
     def _batchGradientDescent_(self, X: NDArray[np.float64], y: NDArray[np.float64], n_data) -> float:
 
         weight = self.weight
@@ -61,7 +61,7 @@ class LinearRegression:
         self.weight = weight - self.learning_rate * derivative_w
         self.bias = bias - self.learning_rate * derivative_b
 
-        cost = _calculateCost(error, n_data)
+        cost = self._calculateCost_(error, n_data)
 
         return cost
 
@@ -124,8 +124,8 @@ class LinearRegression:
 
                     for i in range(self.batches):
                         # Separate into batch
-                        X_batch = X_shuffled[(i * n_rows):n_rows]
-                        y_batch = y_shuffled[(i * n_rows):n_rows]
+                        X_batch = X_shuffled[(i * n_rows):(i + 1) * n_rows]
+                        y_batch = y_shuffled[(i * n_rows):(i + 1) * n_rows]
                         self._batchGradientDescent_(X_batch, y_batch, n_rows)
 
                     y_hat = X_matrix @ self.weight + self.bias
@@ -192,11 +192,105 @@ class LogisticRegression:
     def __str__(self) -> str:
         return "Not implemented."
 
-    def _batchGradientDescent_(self, X: NDArray[np.float64], y: NDArray[np.float64]) -> float:
-        return 0.0
+    @staticmethod
+    def _sigmoid(z):
+        return 1 / (1 + np.exp(-z))
+
+    def _calculateCost_(self, error, n_data, y) -> float:
+        cost = - (1.0 / n_data) * (y.T @ np.log(error) + (1-y).T @ np.log(1-error))
+        return cost
+
+    def _check_convergence_(self, cost: float) -> bool:
+        epsilon = 0.000001
+
+        if self.cost is None:
+            self.cost = cost
+            return False
+        elif abs(self.cost - cost) < epsilon:
+            return True
+        else:  # Update cost for next iteration
+            self.cost = cost
+            return False
+
+    def _batchGradientDescent_(self, X: NDArray[np.float64], y: NDArray[np.float64], n_data) -> float:
+        weight = self.weight
+        bias = self.bias
+        assert weight is not None and bias is not None
+
+        # predictions using sigmoid function
+        z = X @ weight + bias
+        y_hat = self._sigmoid(z)
+        error = y_hat - y
+
+        # gradients
+        derivative_w = (1.0 / n_data) * (X.T @ error)
+        derivative_b = (1.0 / n_data) * np.sum(error)
+
+        # parameter updates
+        self.weight = weight - self.learning_rate * derivative_w
+        self.bias = bias - self.learning_rate * derivative_b
+
+        cost = self._calculateCost_(error, n_data, y)
+
+        return cost
 
     def train(self, X: NDArray[np.float64], y: NDArray[np.float64]) -> None:
-        return 0.0
+        X_matrix, y_matrix = _prepare_X_y(X, y)
+        n_data = float(X.shape[0])
+        features = X.shape[1]
 
-    def predict(self, X) -> NDArray[np.float64]:
-        return np.asarray(X, dtype=np.float64)
+        if self.weight is None:
+            self.weight = np.zeros((features,), dtype=np.float64)
+        if self.bias is None:
+            self.bias = np.float64(0.0)
+
+        # Batch Gradient Descent
+        if self.gd_type == 'BGd':
+            if self.batches == 1:
+                for _ in range(self.n_iters):
+                    cost = self._batchGradientDescent_(X_matrix, y_matrix, n_data)
+                    if self._check_convergence_(cost):
+                        break
+            # Mini-Batch
+            elif self.batches >= 2:
+                n_rows = int(n_data / self.batches)
+                for _ in range(self.n_iters):
+                    # Shuffling rows
+                    indices = np.random.permutation(len(X))
+                    X_shuffled = X_matrix[indices]
+                    y_shuffled = y_matrix[indices]
+
+                    for i in range(self.batches):
+                        # Separate into batch
+                        X_batch = X_shuffled[(i * n_rows):(i + 1) * n_rows]
+                        y_batch = y_shuffled[(i * n_rows):(i + 1) * n_rows]
+                        self._batchGradientDescent_(X_batch, y_batch, n_rows)
+
+                    y_hat = X_matrix @ self.weight + self.bias
+                    error = y_hat - y_matrix
+                    cost = self._calculateCost_(error, n_data, y_matrix)
+
+                    if self._check_convergence_(cost):
+                        break
+
+            else:
+                raise ValueError(f"Batch size {self.batches} not supported. Enter a batch size >= 1")
+
+
+        # Stochastic Gradient Descent
+        elif self.gd_type == 'SGd':
+            for _ in range(self.n_iters):
+                self._stochasticGradientDescent_(X_matrix, y_matrix, n_data)
+                y_hat = X_matrix @ self.weight + self.bias
+                error = y_hat - y_matrix
+                cost = self._calculateCost_(error, n_data)
+                if self._check_convergence_(cost):
+                    break
+
+        else:
+            raise ValueError(f"GD: {self.gd_type} is not supported.")
+
+    def predict(self, X: NDArray[np.float64], proba: bool = True) -> NDArray[np.float64]:
+        z = X @ self.weight + self.bias
+        predictions = self._sigmoid(z)
+        return np.asarray(predictions, dtype=float).reshape(-1) if proba else (predictions>=0.5).astype(np.float64)
