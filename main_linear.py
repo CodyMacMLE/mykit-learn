@@ -2,7 +2,6 @@
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LinearRegression
-import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 import time
@@ -16,7 +15,7 @@ pd.set_option('display.max_columns', None)
 
 def main():
     # Dataset: Experience to Salary
-    df = pd.read_csv('Student_Performance.csv')
+    df = pd.read_csv('data/Student_Performance.csv')
     df["Extracurricular Activities"] = df["Extracurricular Activities"].map({'Yes': 1, 'No': 0})
 
     print("---- Data Summary ----")
