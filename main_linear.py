@@ -7,14 +7,14 @@ from sklearn.metrics import mean_squared_error
 import time
 
 # Internal Libraries
-import mykitlearn
+from mykitlearn import LinearRegression
 
 # Panda Settings
 pd.set_option('display.width', None)
 pd.set_option('display.max_columns', None)
 
 def main():
-    # Dataset: Experience to Salary
+    # Import Dataset "Student_Performance.csv"
     df = pd.read_csv('data/Student_Performance.csv')
     df["Extracurricular Activities"] = df["Extracurricular Activities"].map({'Yes': 1, 'No': 0})
 

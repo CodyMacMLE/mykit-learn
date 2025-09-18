@@ -180,7 +180,7 @@ class LinearRegression:
         return np.asarray(y, dtype=float).reshape(-1)
 
 class LogisticRegression:
-    def __init__(self, learning_rate: float = 0.01, iterations: int = 1000, gd_type: str = 'BGd', batches: int = 1) -> None:
+    def __init__(self, learning_rate: float = 0.1, iterations: int = 1000, gd_type: str = 'BGd', batches: int = 1) -> None:
         self.learning_rate: float = learning_rate
         self.n_iters: int = iterations
         self.gd_type: str = gd_type
@@ -192,12 +192,19 @@ class LogisticRegression:
     def __str__(self) -> str:
         return "Not implemented."
 
+    def error(self, X: NDArray[np.float64], y: NDArray[np.float64]) -> float:
+        z = X @ self.weight + self.bias
+        predictions = self._sigmoid(z)
+        return np.mean((predictions - y) ** 2)
+
     @staticmethod
     def _sigmoid(z):
-        return 1 / (1 + np.exp(-z))
+        z_clipped = np.clip(z, -500, 500)
+        return 1 / (1 + np.exp(-z_clipped))
 
-    def _calculateCost_(self, error, n_data, y) -> float:
-        cost = - (1.0 / n_data) * (y.T @ np.log(error) + (1-y).T @ np.log(1-error))
+    def _calculateCost_(self, n_data, y_hat, y) -> float:
+        y_hat_clipped = np.clip(y_hat, 1e-15, 1 - 1e-15)
+        cost = -(1.0 / n_data) * (y.T @ np.log(y_hat_clipped) + (1-y).T @ np.log(1-y_hat_clipped))
         return cost
 
     def _check_convergence_(self, cost: float) -> bool:
@@ -230,7 +237,7 @@ class LogisticRegression:
         self.weight = weight - self.learning_rate * derivative_w
         self.bias = bias - self.learning_rate * derivative_b
 
-        cost = self._calculateCost_(error, n_data, y)
+        cost = self._calculateCost_(n_data, y_hat, y)
 
         return cost
 
@@ -288,9 +295,9 @@ class LogisticRegression:
                         y_batch = y_shuffled[(i * n_rows):(i + 1) * n_rows]
                         self._batchGradientDescent_(X_batch, y_batch, n_rows)
 
-                    y_hat = X_matrix @ self.weight + self.bias
-                    error = y_hat - y_matrix
-                    cost = self._calculateCost_(error, n_data, y_matrix)
+                    z = X_matrix @ self.weight + self.bias
+                    y_hat = self._sigmoid(z)
+                    cost = self._calculateCost_(n_data, y_hat, y_matrix)
 
                     if self._check_convergence_(cost):
                         break
@@ -303,9 +310,9 @@ class LogisticRegression:
         elif self.gd_type == 'SGd':
             for _ in range(self.n_iters):
                 self._stochasticGradientDescent_(X_matrix, y_matrix, n_data)
-                y_hat = X_matrix @ self.weight + self.bias
-                error = y_hat - y_matrix
-                cost = self._calculateCost_(error, n_data, y_matrix)
+                z = X_matrix @ self.weight + self.bias
+                y_hat = self._sigmoid(z)
+                cost = self._calculateCost_(n_data, y_hat, y_matrix)
                 if self._check_convergence_(cost):
                     break
 
@@ -315,4 +322,4 @@ class LogisticRegression:
     def predict(self, X: NDArray[np.float64], proba: bool = True) -> NDArray[np.float64]:
         z = X @ self.weight + self.bias
         predictions = self._sigmoid(z)
-        return np.asarray(predictions, dtype=float).reshape(-1) if proba else (predictions>=0.5).astype(np.float64)
+        return np.asarray(predictions, dtype=float).reshape(-1) if proba else (predictions>=0.5).astype(np.int64)
